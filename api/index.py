@@ -7,8 +7,8 @@ app = Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def home():
     if request.method == 'GET':
-        return jsonify({"message": "CSV to TXT API is live. Send a POST request with CSV file."})
-    
+        return jsonify({"message": "CSV to TXT API is live. Send POST with CSV file."})
+
     if 'file' not in request.files:
         return "No file part", 400
 
@@ -17,11 +17,14 @@ def home():
     if file.filename == '':
         return "No selected file", 400
 
+    # Read CSV
     stream = io.StringIO(file.stream.read().decode("utf-8"))
     reader = csv.reader(stream)
     
+    # Skip header
     next(reader, None)
 
+    # Create TXT
     output = io.StringIO()
     for row in reader:
         if row:
