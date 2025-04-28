@@ -1,11 +1,14 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
 import csv
 import io
 
 app = Flask(__name__)
 
-@app.route('/', methods=['POST'])
-def convert_csv_to_txt():
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    if request.method == 'GET':
+        return jsonify({"message": "CSV to TXT API is live. Send a POST request with CSV file."})
+    
     if 'file' not in request.files:
         return "No file part", 400
 
@@ -14,14 +17,11 @@ def convert_csv_to_txt():
     if file.filename == '':
         return "No selected file", 400
 
-    # Read CSV
     stream = io.StringIO(file.stream.read().decode("utf-8"))
     reader = csv.reader(stream)
     
-    # Skip header
     next(reader, None)
 
-    # Create TXT
     output = io.StringIO()
     for row in reader:
         if row:
