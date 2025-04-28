@@ -7,7 +7,8 @@ app = Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def home():
     if request.method == 'GET':
-        return jsonify({"message": "CSV to TXT API is live. Send POST with CSV file."})
+        # If user visits normally, show welcome JSON
+        return jsonify({"message": "CSV to TXT API is live. Send POST request with CSV file."})
 
     if 'file' not in request.files:
         return "No file part", 400
@@ -17,27 +18,33 @@ def home():
     if file.filename == '':
         return "No selected file", 400
 
-    # Read CSV
-    stream = io.StringIO(file.stream.read().decode("utf-8"))
-    reader = csv.reader(stream)
-    
-    # Skip header
-    next(reader, None)
+    try:
+        # Read CSV
+        stream = io.StringIO(file.stream.read().decode("utf-8"))
+        reader = csv.reader(stream)
 
-    # Create TXT
-    output = io.StringIO()
-    for row in reader:
-        if row:
-            output.write(f"{row[0]}\n")
+        # Skip header (first line)
+        next(reader, None)
 
-    output.seek(0)
+        # Create TXT file content
+        output = io.StringIO()
+        for row in reader:
+            if row:  # check if row is not empty
+                output.write(f"{row[0]}\n")
 
-    return send_file(
-        io.BytesIO(output.read().encode('utf-8')),
-        mimetype='text/plain',
-        as_attachment=True,
-        download_name='user_ids.txt'
-    )
+        output.seek(0)
 
+        # Return TXT file with correct filename
+        return send_file(
+            io.BytesIO(output.read().encode('utf-8')),
+            mimetype='text/plain',
+            as_attachment=True,
+            download_name='user_ids.txt'
+        )
+
+    except Exception as e:
+        return f"Error while processing file: {str(e)}", 500
+
+# Run server (not used in Vercel, but good for local testing)
 if __name__ == "__main__":
     app.run()
